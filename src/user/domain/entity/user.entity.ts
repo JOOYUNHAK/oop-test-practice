@@ -1,5 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { USER_STATUS } from '../enum/user-status.enum'
+import { Authentication } from "src/auth/domain/authentication/entity/auth.entity";
 
 @Entity('user')
 export class UserEntity {
@@ -27,12 +28,13 @@ export class UserEntity {
     @Column({ type: 'enum', enum: USER_STATUS})
     private readonly status: USER_STATUS;
 
-    @Column({ type: 'varchar', name: 'refresh_token' })
-    private readonly refreshToken: string;
+    @OneToOne(() => Authentication, { cascade: ['insert', 'remove'] })
+    @JoinColumn({name: 'authentication_id'})
+    private readonly authentication: Authentication
     
     constructor(
-        id: number, email: string, password: string, registeredAt: Date, updatedAt: Date, 
-        loginTry: number, blockedUpTo: Date, status: USER_STATUS, refreshToken: string
+        id: number, email: string, password: string, updatedAt: Date, registeredAt: Date, 
+        loginTry: number, blockedUpTo: Date, status: USER_STATUS, authentication: Authentication
     ) {
         this.id = id;
         this.email = email;
@@ -41,8 +43,8 @@ export class UserEntity {
         this.updatedAt = updatedAt;
         this.loginTry = loginTry;
         this.blockedUpTo = blockedUpTo;
-        this.refreshToken = refreshToken;
         this.status = status;
+        this.authentication = authentication;
     }
 
     getId(): number { return this.id; };

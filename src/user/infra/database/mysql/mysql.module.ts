@@ -1,7 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UserEntity } from "src/user/domain/entity/user-entity";
+import { Authentication } from "src/auth/domain/authentication/entity/auth.entity";
+import { UserEntity } from "src/user/domain/entity/user.entity";
 
 @Module({
     imports: [
@@ -14,9 +15,9 @@ import { UserEntity } from "src/user/domain/entity/user-entity";
                 username: configService.get('MYSQL.USERNAME'),
                 password: configService.get('MYSQL.PASSWORD'),
                 database: configService.get('MYSQL.DATABASE'),
-                entities: [UserEntity],
+                entities: [UserEntity, Authentication],
                 synchronize: true, // 개발용
-                logging: true
+                logging: true,
             }),
             inject: [ConfigService]
         })
