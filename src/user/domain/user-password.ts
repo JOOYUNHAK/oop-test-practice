@@ -12,6 +12,8 @@ export class Password {
         this.isHashed = true;
      };
 
+    getValue(): string { return this.password; };
+
     /* 비밀번호 유효성 검사 */
     private static validate(plainTextPassword: string): boolean {
         const passwordCheckReg = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{10,}$/;
@@ -22,7 +24,7 @@ export class Password {
 
     /* 비밀번호 암호화 */
     private static async encrypt(plainTextPassword: string): Promise<string> {
-        return await bcrypt.hash(plainTextPassword, await bcrypt.genSalt());
+        return bcrypt.hashSync(plainTextPassword, 5);
     }
 
     /* 암호화 되지 않은 비밀번호와 비교 */
