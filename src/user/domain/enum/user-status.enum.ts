@@ -2,6 +2,8 @@
 export enum USER_STATUS {
     LOGINED = 'LOGINED',
     LOGOUTED = 'LOGOUTED',
+    PASSED = 'PASSED',
+    DENIED = 'DENIED',
     BLOCKED = 'BLOCKED',
     LEAVED = 'LEAVED'
 };
