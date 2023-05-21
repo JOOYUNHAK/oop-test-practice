@@ -20,4 +20,12 @@ export class UserRepository extends Repository<UserEntity> implements IUserRepos
             .where('email = :email', { email })
             .getOne();
     }
+
+    async findById(id: number): Promise<UserEntity> {
+        return await this.userRepository
+            .createQueryBuilder('user')
+            .innerJoinAndSelect('user.authentication', 'auth', 'user.id = auth.id')
+            .where('user.id = :id', { id })
+            .getOne(); 
+    }
 }
