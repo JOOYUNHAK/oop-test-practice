@@ -11,13 +11,14 @@ import { AuthService } from "src/auth/application/service/auth.service";
 import { ChangePasswordDto } from "src/user/interface/dto/change-password.dto";
 import { UserAuthentication } from "src/auth/domain/authentication/authentication";
 import { UserDto } from "src/user/interface/dto/user.dto";
+import { LeaveRequestDto } from "src/user/interface/dto/leave-request.dto";
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly userMapper: UserMapper,
         private readonly userRepository: UserRepository,
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
     ) { }
     /* 회원가입 */
     async register(registerDto: RegisterDto) {
@@ -91,4 +92,12 @@ export class UserService {
         return await this.authService
             .updateAuthentication(user.getAuthentication(), user.getEmail().getValue());
     }
-}
+
+    async leave(id: number, leaveRequestDto: LeaveRequestDto) {
+        const user: User = await this.findUserByIdAndConvertToUser(id);
+        await user.leaved(leaveRequestDto.password);
+        await this.userRepository.remove(this.userMapper.domainToEntity(user), { transaction: false });
+        /* cascade가 되지 않아 수동 삭제 */
+        await this.userRepository.deleteAuthentication(id);
+    }
+} 
