@@ -54,9 +54,14 @@ export class User {
         return this;
     };
 
+    /* 로그아웃 처리, 이미 로그아웃 상태일경우 guard에게 막힌다 */
+    logout(logoutTime: Date) {
+        this.updatedAt = logoutTime;
+        this.status = USER_STATUS.LOGOUTED; 
+    };
+
     /* 로그인 처리 */
-    async loginWith
-    (password: string, now: Date) {
+    async loginWith(password: string, now: Date) {
         /* 로그인시도 횟수가 5번이면 Block Time 체크 */
         if( this.loginTry == this.LOGIN_TRY_LIMIT_COUNT ) {
             const fromPassedSec = 

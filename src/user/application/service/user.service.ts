@@ -62,4 +62,11 @@ export class UserService {
     async findUserByEmail(email: string): Promise<UserEntity> {
         return await this.userRepository.findByEmail(email);
     }
+
+    async logout(id: number): Promise<void> {
+        const userEntity: UserEntity = await this.userRepository.findById(id);
+        const user: User = await this.userMapper.entityToDomain(userEntity);
+        user.logout(new Date());
+        await this.userRepository.save(this.userMapper.domainToEntity(user));
+    }
 }
