@@ -106,6 +106,12 @@ export class User {
         this.updatedAt = new Date();
      }
 
+    async leaved(inputPassword: string) {
+        if( !await this.identification(inputPassword) )
+            throw new UnauthorizedException('Something Error Id Or Password');
+        this.status = USER_STATUS.LEAVED;
+    }
+
     private loginSucceeded(now: Date) {
         this.loginTry = 0;
         this.blockedUpTo = null;

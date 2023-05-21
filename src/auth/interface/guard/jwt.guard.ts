@@ -31,7 +31,7 @@ export class JwtGuard extends AuthGuard('jwt') implements OnModuleInit {
         const payload = this.jwtService.decode(accessToken);
         if( !payload ) throw new NotFoundException('Not Found User')
         
-        const user: UserEntity = await this.userService.findUserByEmail(payload['email']);
+        const user: UserEntity = await this.userService.notFoundEmailErrorOrUser(payload['email']);
         this.userStatusCheck(user);
 
         try {
