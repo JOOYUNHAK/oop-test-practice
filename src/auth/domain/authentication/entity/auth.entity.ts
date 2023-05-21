@@ -9,14 +9,18 @@ export class Authentication {
     @Column({ name: 'refresh_token' })
     private readonly refreshToken: string;
 
-    @OneToOne(() => UserEntity, { onDelete: 'CASCADE'} )
+    @OneToOne(() => UserEntity, (user) => user.authentication, { onDelete: 'CASCADE', onUpdate: 'CASCADE' } )
     user: UserEntity
 
     @Column({ name: 'updated_at', type: 'timestamp' })
     private readonly updatedAt: Date;
 
-    constructor(refreshToken: string, updatedAt: Date ) {
+    constructor(id: number, refreshToken: string, updatedAt: Date ) {
+        this.id = id;
         this.refreshToken = refreshToken;
         this.updatedAt = updatedAt;
     }
+
+    getRefreshAuthentication(): string { return this.refreshToken; };
+    getUpdatedTime(): Date { return this.updatedAt; };
 }
