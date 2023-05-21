@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AuthService } from "src/auth/application/service/auth.service";
 import { UserAuthentication } from "src/auth/domain/authentication/authentication";
 import { Authentication } from "src/auth/domain/authentication/entity/auth.entity";
+import { JwtToken } from "src/auth/infra/authentication/token/jwt-token";
 import { UserEntity } from "src/user/domain/entity/user.entity";
 import { User } from "src/user/domain/user";
 import { Email } from "src/user/domain/user-email";
@@ -41,12 +42,27 @@ export class UserMapper {
             user.getId(),
             user.getEmail().getValue(),
             user.getPassword().getValue(),
+            user.getUpdateTime(), 
             user.getRegisteredTime(),
-            user.getUpdateTime(),
             user.getLoginTryCount(),
             user.getBlockedTime(),
             user.getStatus(),
             this.authDomainToEntity(user.getAuthentication())
+        )
+    }
+
+    /* Entity를 도메인 모델로 */
+    async entityToDomain(userEntity: UserEntity): Promise<User> {
+        return new User(
+            userEntity.getId(),
+            Email.create(userEntity.getEmail()),
+            await Password.create(userEntity.getPassword(), true),
+            this.authEntityToDomain(userEntity.getId(), userEntity.getAuthentication()),
+            userEntity.getUpdatedTime(),
+            userEntity.getRegisteredTime(),
+            userEntity.getLoginTry(),
+            userEntity.getBlockedTime(),
+            userEntity.getStatus()
         )
     }
 
@@ -62,8 +78,17 @@ export class UserMapper {
     /* 새로 생성하여 받은 인증을 Auth 테이블에 저장하기 위해 Entity로 */
     private authDomainToEntity(userAuthentication: UserAuthentication): Authentication {
         return new Authentication(
+            userAuthentication.getId(),
             userAuthentication.getType().getRefreshAuthentication(), // 인증 갱신용 -> DB 저장
             userAuthentication.getType().getRefreshedTime() // 마지막으로 갱신된 시간
+        )
+    } 
+
+    /* UserEntity에 있는 인증을 도메인 모델로 변경 */
+    private authEntityToDomain(userId: number, authentication: Authentication): UserAuthentication {
+        return new UserAuthentication(
+            userId,  
+            new JwtToken(null, authentication.getRefreshAuthentication(), authentication.getUpdatedTime())
         )
     }
 }

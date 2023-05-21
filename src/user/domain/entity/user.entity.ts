@@ -5,7 +5,7 @@ import { Authentication } from "src/auth/domain/authentication/entity/auth.entit
 @Entity('user')
 export class UserEntity {
     @PrimaryGeneratedColumn('increment')
-    private readonly id: number;
+    readonly id: number;
 
     @Column({ type: 'varchar', length: 50 })
     private readonly email: string;
@@ -28,9 +28,9 @@ export class UserEntity {
     @Column({ type: 'enum', enum: USER_STATUS})
     private readonly status: USER_STATUS;
 
-    @OneToOne(() => Authentication, { cascade: ['insert', 'remove'] })
+    @OneToOne(() => Authentication, { cascade: ['insert', 'remove', 'update'] })
     @JoinColumn({name: 'authentication_id'})
-    private readonly authentication: Authentication
+    readonly authentication: Authentication
     
     constructor(
         id: number, email: string, password: string, updatedAt: Date, registeredAt: Date, 
@@ -39,8 +39,8 @@ export class UserEntity {
         this.id = id;
         this.email = email;
         this.password = password;
-        this.registeredAt = registeredAt;
         this.updatedAt = updatedAt;
+        this.registeredAt = registeredAt;
         this.loginTry = loginTry;
         this.blockedUpTo = blockedUpTo;
         this.status = status;
@@ -48,4 +48,13 @@ export class UserEntity {
     }
 
     getId(): number { return this.id; };
+    getEmail(): string { return this.email; };
+    getPassword(): string { return this.password; };
+    getAuthentication(): Authentication { return this.authentication; };
+    getRegisteredTime(): Date { return this.registeredAt; };
+    getUpdatedTime(): Date { return this.updatedAt; };
+    getLoginTry(): number { return this.loginTry; };
+    getBlockedTime(): Date { return this.blockedUpTo; };
+    getStatus(): USER_STATUS { return this.status; };
+
 }

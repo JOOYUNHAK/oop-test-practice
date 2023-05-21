@@ -1,4 +1,4 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 export class Password {
@@ -31,12 +31,10 @@ export class Password {
     public async comparePassword(
         plainTextPassword: string, encryptedPassword: string
     ): Promise<boolean> {
-        if( !await bcrypt.compare(plainTextPassword, encryptedPassword) )
-            throw new UnauthorizedException('Password Not Matched');
-        return true;
+        return await bcrypt.compare(plainTextPassword, encryptedPassword)
     }
 
-    /* 
+    /*  
         암호화 되어 있는 비밀번호면 그대로 Return
         암호화 되어 있지 않으면 암호화 해서 Return
     */

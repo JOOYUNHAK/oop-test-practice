@@ -15,7 +15,18 @@ export class AuthService {
         ]);
         return UserAuthentication.createWith(new JwtToken(accessToken, refreshToken, new Date()));
     }
-
+ 
+    /* 
+        RefreshToken의 마지막 갱신일을 검사해 일정 기간 이상 지났으면 RefreshToken 갱신
+        마지막 갱신일이 얼마 지나지 않았으면 AccessToken만 갱신해서 Return
+    */
+    async updateAuthentication(userAuthentication: UserAuthentication, email: string): Promise<UserAuthentication> {
+        userAuthentication.updateClientAuthentication( await this.createAccessToken(email) ); // AccessToken
+        if( userAuthentication.isNeededUpdate() ) // RefreshToken의 업데이트가 필요하다면
+            userAuthentication.updateRefreshAuthentication( await this.createRefreshToekn(email) );
+        return userAuthentication
+    }
+ 
     async createAccessToken(email: string): Promise<string> {
         return this.jwtService.signAsync(
             JwtToken.createAccessTokenPayload(email),
