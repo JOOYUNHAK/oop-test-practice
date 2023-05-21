@@ -15,7 +15,8 @@ export class UserRepository extends Repository<UserEntity> implements IUserRepos
 
     async findByEmail(email: string): Promise<UserEntity> {
         return await this.userRepository
-            .createQueryBuilder()
+            .createQueryBuilder('user')
+            .innerJoinAndSelect('user.authentication', 'auth', 'user.id = auth.id')
             .where('email = :email', { email })
             .getOne();
     }
