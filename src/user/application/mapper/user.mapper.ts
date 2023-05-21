@@ -70,7 +70,6 @@ export class UserMapper {
     toDto(user: User): UserDto {
         return {
             id: user.getId(),
-            email: user.getEmail().getValue(),
             accessToken: user.getClientAuthentication()
         }
     }
