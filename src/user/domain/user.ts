@@ -2,12 +2,12 @@ import { UserAuthentication } from "src/auth/domain/authentication/authenticatio
 import { USER_STATUS } from "./enum/user-status.enum";
 import { Email } from "./user-email";
 import { Password } from "./user-password";
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 export class User {
     private id : number;
     private readonly email: Email;
-    private readonly password: Password;
+    private password: Password;
     private updatedAt: Date;
     private registeredAt: Date;
     private loginTry: number;
@@ -72,9 +72,15 @@ export class User {
             this.initBlockedInfo(); // 5분이 지났으면 Block 정보 초기화 이후 다음 프로세스
         }
         /* 로그인 횟수 검사 통과되면 비밀번호 검사 */
-        if( await this.password.comparePassword(password, this.password.getValue()) )
+        if( await this.identification(password) )
             return this.loginSucceeded(now);
         this.loginFailed(now);
+    }
+
+    /* 들어온 암호로 본인확인 */
+    async identification(inputPassword: string): Promise<boolean> {
+        return await this.password
+            .comparePassword(inputPassword, this.password.getValue())
     }
 
     /* 비밀번호를 5번까지 틀린 사람 Throw Error */
@@ -87,6 +93,17 @@ export class User {
     updateAuthentication(updateAuthentication: UserAuthentication) {
         this.authentication = updateAuthentication;
         this.status = USER_STATUS.LOGINED;
+     }
+
+    async changePassword(old: string, toChange: string) {
+        /* 비밀번호가 일치하지 않으면 */
+        if( !await this.identification(old) )
+            throw new UnauthorizedException('Something Error Id Or Password');
+        /* 본인은 맞는데 변경하려는 비밀번호가 똑같다면 */
+        if( old === toChange ) throw new ConflictException('Duplicated Password') 
+        /* 검사 전부 통과하여 암호화된 새 비밀번호 발급 */
+        this.password = await Password.create(toChange, false); 
+        this.updatedAt = new Date();
      }
 
     private loginSucceeded(now: Date) {

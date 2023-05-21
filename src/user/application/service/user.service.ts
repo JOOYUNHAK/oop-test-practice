@@ -8,6 +8,9 @@ import { LoginDto } from "src/user/interface/dto/login.dto";
 import { Email } from "src/user/domain/user-email";
 import { USER_STATUS } from "src/user/domain/enum/user-status.enum";
 import { AuthService } from "src/auth/application/service/auth.service";
+import { ChangePasswordDto } from "src/user/interface/dto/change-password.dto";
+import { UserAuthentication } from "src/auth/domain/authentication/authentication";
+import { UserDto } from "src/user/interface/dto/user.dto";
 
 @Injectable()
 export class UserService {
@@ -27,18 +30,16 @@ export class UserService {
     }
 
     /* 로그인 */
-    async login(loginDto: LoginDto) { 
+    async login(loginDto: LoginDto): Promise<UserDto> { 
         /* 이메일의 유효성을 검사하며 저장소로부터 User를 가져온다 */
         const userEntity: UserEntity = await this.notFoundEmailErrorOrUser( Email.create(loginDto.email).getValue() );
         /* 가져온 User를 도메인 모델로 변경 */
         const user: User = await this.userMapper.entityToDomain(userEntity);
         await user.loginWith(loginDto.password, new Date()); // 로그인 시도
         /* 만약 패스워드가 일치한다면 해당 사용자의 기존 인증 갱신 */
-        if( user.getStatus() == USER_STATUS.PASSED ) { 
-            user.updateAuthentication( 
-                await this.authService.updateAuthentication(user.getAuthentication(), user.getEmail().getValue())
-            )
-        } 
+        if( user.getStatus() == USER_STATUS.PASSED ) 
+            user.updateAuthentication(await this.refreshAuthentication(user))
+
         /* 로그인에 성공했으므로 마지막 갱신일, 실패했으면 실패 로직에 따른 결과 업데이트 */
         await this.userRepository.save(this.userMapper.domainToEntity(user));
         user.statusCheck(); // 비밀번호를 틀렸을 경우 Throw Error
@@ -64,9 +65,30 @@ export class UserService {
     }
 
     async logout(id: number): Promise<void> {
-        const userEntity: UserEntity = await this.userRepository.findById(id);
-        const user: User = await this.userMapper.entityToDomain(userEntity);
+        const user = await this.findUserByIdAndConvertToUser(id);
         user.logout(new Date());
         await this.userRepository.save(this.userMapper.domainToEntity(user));
+    }
+
+    async changePassword(id: number, changePasswordDto: ChangePasswordDto): Promise<UserDto> {
+        const user: User = await this.findUserByIdAndConvertToUser(id);
+        /* 비밀번호 변경 수행 */
+        await user.changePassword(changePasswordDto.oldPassword, changePasswordDto.newPassword);
+        /* 비밀번호 변경에 성공하면 인증 갱신 */
+        user.updateAuthentication(await this.refreshAuthentication(user)); 
+        await this.userRepository.save(this.userMapper.domainToEntity(user));
+        return this.userMapper.toDto(user)
+    }
+
+    async findUserByIdAndConvertToUser(id: number): Promise<User> {
+        return this.userMapper.entityToDomain( 
+            await this.userRepository.findById(id)
+        )
+    }
+
+    /* 사용자의 기존 인증을 갱신시키기위해 AuthService 호출하는 함수 */
+    async refreshAuthentication(user: User): Promise<UserAuthentication> {
+        return await this.authService
+            .updateAuthentication(user.getAuthentication(), user.getEmail().getValue());
     }
 }
