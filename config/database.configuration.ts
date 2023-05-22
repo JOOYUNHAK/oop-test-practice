@@ -1,9 +1,9 @@
 export default () => ({
     MYSQL: {
-        HOST: '127.0.0.1',
+        HOST: 'database-1.cyhk2vuwnvlk.ap-northeast-2.rds.amazonaws.com',
         PORT: 3306,
         USERNAME: 'root',
-        PASSWORD: '1234',
+        PASSWORD: '12345678',
         DATABASE: 'aaant'
     }
-})
+}) 
