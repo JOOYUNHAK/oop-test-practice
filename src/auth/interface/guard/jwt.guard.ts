@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException, ExecutionContext, OnModuleInit, NotF
 import { JwtService } from "@nestjs/jwt";
 import { ModuleRef } from "@nestjs/core";
 import { UserService } from "src/user/application/service/user.service";
-import { UserEntity } from "src/user/domain/entity/user.entity";
+import { User } from "src/user/domain/user";
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') implements OnModuleInit {
@@ -30,8 +30,7 @@ export class JwtGuard extends AuthGuard('jwt') implements OnModuleInit {
         /* 토큰을 디코드 못해도 사용자 Error  */
         const payload = this.jwtService.decode(accessToken);
         if( !payload ) throw new NotFoundException('Not Found User')
-        
-        const user: UserEntity = await this.userService.notFoundEmailErrorOrUser(payload['email']);
+        const user = await this.userService.notFoundEmailErrorOrUser(payload['email']);
         this.userStatusCheck(user);
 
         try {
@@ -44,7 +43,7 @@ export class JwtGuard extends AuthGuard('jwt') implements OnModuleInit {
     }
 
     /* 중복 로그아웃 및 토큰에 해당하는 email 사용자 없는 경우 */
-    userStatusCheck(user: UserEntity) {
+    userStatusCheck(user: User) {
         if( user.getStatus() === 'LOGOUTED')
             throw new UnauthorizedException('Login Again Please');
         if( !user )

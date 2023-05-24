@@ -1,8 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Authentication } from "src/auth/domain/authentication/entity/auth.entity";
-import { UserEntity } from "src/user/domain/entity/user.entity";
+import { UserAuthentication } from "src/auth/domain/authentication/authentication";
+import { LoginBlockInfo } from "src/user/domain/login-block-info";
+import { User } from "src/user/domain/user";
+import { Password } from "src/user/domain/user-password";
 
 @Module({
     imports: [
@@ -12,10 +14,10 @@ import { UserEntity } from "src/user/domain/entity/user.entity";
                 type: 'mysql',
                 host: configService.get('MYSQL.HOST'),
                 port: configService.get('MYSQL.PORT'),
-                username: configService.get('MYSQL.USERNAME'),
+                username: configService.get('MYSQL.USERNAME'), 
                 password: configService.get('MYSQL.PASSWORD'),
                 database: configService.get('MYSQL.DATABASE'),
-                entities: [UserEntity, Authentication],
+                entities: [User, UserAuthentication, Password, LoginBlockInfo],
                 synchronize: true, // 개발용
                 logging: true,
             }),
