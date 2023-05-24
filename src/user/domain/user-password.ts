@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from './user';
@@ -39,7 +39,8 @@ export class Password {
 
     /* 비밀번호 변경 */
     public async changePassword(old: string, toChange: string, updatedAt: Date): Promise<boolean> {
-        if (!await this.comparePassword(old)) return false;
+        if ( !await this.comparePassword(old) )
+            throw new UnauthorizedException('Something Error Id Or Password')
         if (this.equals(old, toChange))
             throw new ConflictException('Duplicated Password');
         this.changeSucceeded(toChange, updatedAt);
