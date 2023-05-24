@@ -1,19 +1,52 @@
-import { IAuthentication } from "./iauthentication";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/user/domain/user";
 
+@Entity('authentication')
 export class UserAuthentication {
-    constructor( private userId: number, private readonly type: IAuthentication) {};
+    @PrimaryGeneratedColumn('increment')
+    private id: number;
     
-    getType(): IAuthentication { return this.type; };
-    getId(): number { return this.userId; };
-    isNeededUpdate(): boolean { return this.type.isNearingExpirationTime() } // 인증 타입에게 업데이트가 필요한지 매세지
+    @Column({ type: 'varchar', name: 'refresh_token'})
+    private refreshAuthentication: string;
+    
+    @Column({ type: 'timestamp', name: 'refreshed_at' })
+    private refreshedAt: Date;
+    
+    @OneToOne(() => User, { onDelete: 'CASCADE' })
+    @JoinColumn({name: 'user_id', referencedColumnName: 'id' })
+    readonly user: User
 
-    /* AccessToken, RefreshToken 갱신해달라고 매세지 */
-    updateClientAuthentication(clientAuthentication: string) { this.type.updateClientAuthentication(clientAuthentication); }
-    updateRefreshAuthentication(refreshAuthentication: string) { this.type.updateRefreshAuthentication(refreshAuthentication); }
+    private clientAuthentication: string;
     
-    /* 인증 타입으로 Session이나 Token등 여러가지 올 수 있게 하기 위해 */
-    static createWith (authenticationType: IAuthentication) {
-        return new UserAuthentication(null, authenticationType)
+    constructor( clientAuthentication: string, refreshAuthentication: string, refreshedAt: Date) {
+        this.clientAuthentication = clientAuthentication;
+        this.refreshAuthentication = refreshAuthentication;
+        this.refreshedAt = refreshedAt;
+    };
+    
+    getId(): number { return this.id; };
+    
+    isNeededUpdate(now: Date): boolean { 
+        return Math.floor(
+            ((now.getTime() - this.refreshedAt.getTime()) / AUTHENTICATION_OPTION.EXPIRED_TIME)
+        ) > AUTHENTICATION_OPTION.REFRESH_CYCLE ? true : false;
+     } 
+
+    getClientAuthentication(): string { return this.clientAuthentication; };
+
+    updateClientAuthentication(clientAuthentication: string) { this.clientAuthentication = clientAuthentication; };
+    updateRefreshAuthentication(refreshAuthentication: string, refreshedAt: Date) { 
+        this.refreshAuthentication = refreshAuthentication;
+        this.refreshedAt = refreshedAt;
+    };
+    
+    static createWith ( clientAuthentication: string, refreshAuthentication: string ) {
+        return new UserAuthentication(clientAuthentication, refreshAuthentication, new Date())
     }
+}
+
+enum AUTHENTICATION_OPTION {
+    EXPIRED_TIME = 1000 * 60 * 60 * 24,
+    REFRESH_CYCLE = 7
 }
 
