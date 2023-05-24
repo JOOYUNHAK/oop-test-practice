@@ -1,49 +1,60 @@
 import { UserAuthentication } from "src/auth/domain/authentication/authentication";
 import { USER_STATUS } from "./enum/user-status.enum";
-import { Email } from "./user-email";
 import { Password } from "./user-password";
-import { ConflictException, ForbiddenException, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { LoginBlockInfo } from "./login-block-info";
 
+@Entity('user')
 export class User {
+    @PrimaryGeneratedColumn('increment')
     private id : number;
-    private readonly email: Email;
-    private password: Password;
-    private updatedAt: Date;
-    private registeredAt: Date;
-    private loginTry: number;
-    private authentication: UserAuthentication;
-    private status: USER_STATUS;
-    private blockedUpTo?: Date;
 
-    private readonly LOGIN_TRY_LIMIT_COUNT = 5;
-    private readonly LOGIN_BLOCK_TIME = 300;
+    @Column({ type: 'varchar', length: 50 })
+    private readonly email: string;
+
+    @OneToOne(() => Password, (password) => password.user, { cascade: ['insert', 'update' ]})
+    public password: Password;    
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', name: 'registered_at' })
+    private registeredAt: Date;
+
+    @OneToOne(() => UserAuthentication, (auth) => auth.user, {cascade: ['insert', 'update' ]})
+    public authentication: UserAuthentication;
+
+    @Column({ type: 'enum', enum: USER_STATUS })
+    private status: USER_STATUS;
+
+    @OneToOne(() => LoginBlockInfo, (block) => block.user, { cascade: ['insert', 'update'] })
+    public loginBlockInfo: LoginBlockInfo;
+
+    @Column({ type: 'timestamp', name: 'updated_at' })
+    private updatedAt: Date;
 
     constructor( 
-        id: number, email: Email, password: Password, authentication: UserAuthentication,
-        updatedAt: Date, registeredAt: Date, loginTry: number, blockedUpTo: Date, status: USER_STATUS
+        id: number, email: string, password: Password, authentication: UserAuthentication,
+        updatedAt: Date, loginBlockInfo: LoginBlockInfo, status: USER_STATUS
     ) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.authentication = authentication;
         this.updatedAt = updatedAt;
-        this.registeredAt = registeredAt;
-        this.loginTry = loginTry;
-        this.blockedUpTo = blockedUpTo;
+        this.loginBlockInfo = loginBlockInfo;
         this.status = status;
     }
 
     getId(): number { return this.id };
-    getEmail(): Email { return this.email; };
+    getEmail(): string { return this.email; };
     getPassword(): Password { return this.password; };
     getUpdateTime(): Date { return this.updatedAt; };
     getRegisteredTime(): Date { return this.registeredAt; };
-    getLoginTryCount(): number { return this.loginTry; };
-    getBlockedTime(): Date { return this.blockedUpTo; };
+    getBlockedTime(): LoginBlockInfo { return this.loginBlockInfo; };
     getStatus(): USER_STATUS { return this.status; };
     getAuthentication(): UserAuthentication { return this.authentication; };
-    getClientAuthentication():string { return this.authentication.getType().getClientAuthentication(); };
+    getClientAuthentication():string { return this.authentication.getClientAuthentication(); };
 
+    /* 생성된 유저의 아이디 */
     withId(id: number): User { 
         this.id = id;
         return this;
@@ -62,26 +73,15 @@ export class User {
 
     /* 로그인 처리 */
     async loginWith(password: string, now: Date) {
-        /* 로그인시도 횟수가 5번이면 Block Time 체크 */
-        if( this.loginTry == this.LOGIN_TRY_LIMIT_COUNT ) {
-            const fromPassedSec = 
-                Math.floor(( now.getTime() - this.blockedUpTo.getTime() ) / 1000);
-            if( fromPassedSec < this.LOGIN_BLOCK_TIME ) // 5분 경과 안했으면 Throw Error
-                throw new ForbiddenException('Login Try Count Exceed')
-
-            this.initBlockedInfo(); // 5분이 지났으면 Block 정보 초기화 이후 다음 프로세스
-        }
+        /* 로그인 차단된 유저인지 */
+        this.loginBlockInfo.check(now);
         /* 로그인 횟수 검사 통과되면 비밀번호 검사 */
-        if( await this.identification(password) )
-            return this.loginSucceeded(now);
-        this.loginFailed(now);
+        await this.password.comparePassword(password) ? 
+            this.loginSucceeded(now) : this.loginFailed(now);
     }
 
-    /* 들어온 암호로 본인확인 */
-    async identification(inputPassword: string): Promise<boolean> {
-        return await this.password
-            .comparePassword(inputPassword, this.password.getValue())
-    }
+    /* 로그인에 성공했는지 */
+    isLoginSucceeded(): boolean { return this.status == USER_STATUS.PASSED; };
 
     /* 비밀번호를 5번까지 틀린 사람 Throw Error */
     statusCheck() {
@@ -95,44 +95,29 @@ export class User {
         this.status = USER_STATUS.LOGINED;
      }
 
-    async changePassword(old: string, toChange: string) {
-        /* 비밀번호가 일치하지 않으면 */
-        if( !await this.identification(old) )
+    async changePassword(old: string, toChange: string, updatedAt: Date) {
+        /* 비밀번호 변경 실패 */
+        if( !await this.password.changePassword(old, toChange, new Date()) ) 
             throw new UnauthorizedException('Something Error Id Or Password');
-        /* 본인은 맞는데 변경하려는 비밀번호가 똑같다면 */
-        if( old === toChange ) throw new ConflictException('Duplicated Password') 
-        /* 검사 전부 통과하여 암호화된 새 비밀번호 발급 */
-        this.password = await Password.create(toChange, false); 
-        this.updatedAt = new Date();
+        this.updatedAt = updatedAt;
      }
 
+     /* 탈퇴 */
     async leaved(inputPassword: string) {
-        if( !await this.identification(inputPassword) )
+        if( !await this.password.comparePassword(inputPassword) )
             throw new UnauthorizedException('Something Error Id Or Password');
         this.status = USER_STATUS.LEAVED;
     }
 
-    private loginSucceeded(now: Date) {
-        this.loginTry = 0;
-        this.blockedUpTo = null;
+    private loginSucceeded(now: Date): void {
+        this.loginBlockInfo.initBlockInfo();
         this.updatedAt = now;
         this.status = USER_STATUS.PASSED;
     }
 
-    private loginFailed(now: Date) {
-        this.loginTry += 1;
-        /* 5번째 틀렸을 경우엔 사용자 상태와 Block된 시간 설정 */
-        if( this.loginTry == 5 ) {
-            this.blockedUpTo = now;
-            this.status = USER_STATUS.BLOCKED;
-            return;
-        }
-        this.status = USER_STATUS.DENIED;
+    private loginFailed(now: Date): void {
+        this.loginBlockInfo.handleFailed(now);
+        this.status = this.loginBlockInfo.toBeBlocked() ? 
+                        USER_STATUS.BLOCKED : USER_STATUS.DENIED 
     }
-
-    private initBlockedInfo() { 
-        this.loginTry = 0;
-        this.status = USER_STATUS.LOGOUTED;
-    }
-
 }
