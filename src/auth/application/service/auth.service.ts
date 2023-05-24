@@ -13,7 +13,7 @@ export class AuthService {
             this.createAccessToken(email),
             this.createRefreshToekn(email)
         ]);
-        return UserAuthentication.createWith(new JwtToken(accessToken, refreshToken, new Date()));
+        return UserAuthentication.createWith(accessToken, refreshToken );
     }
  
     /* 
@@ -22,8 +22,8 @@ export class AuthService {
     */
     async updateAuthentication(userAuthentication: UserAuthentication, email: string): Promise<UserAuthentication> {
         userAuthentication.updateClientAuthentication( await this.createAccessToken(email) ); // AccessToken
-        if( userAuthentication.isNeededUpdate() ) // RefreshToken의 업데이트가 필요하다면
-            userAuthentication.updateRefreshAuthentication( await this.createRefreshToekn(email) );
+        if( userAuthentication.isNeededUpdate(new Date()) ) // RefreshToken의 업데이트가 필요하다면
+            userAuthentication.updateRefreshAuthentication( await this.createRefreshToekn(email), new Date() );
         return userAuthentication
     }
  
