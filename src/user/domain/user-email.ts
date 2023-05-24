@@ -4,7 +4,6 @@ export class Email {
     private readonly email: string;
     constructor( email: string ) { this.email = email };
 
-    getValue(): string { return this.email; };
     /* 이메일 유효성 검사 */
     private static validate(email: string): boolean {
         const emailCheckReg = 
@@ -15,8 +14,8 @@ export class Email {
     }
 
     /* 사용자로부터 받은 이메일 유효성 검사 후 반환 */
-    static create(email: string): Email {
+    static create(email: string): string {
         this.validate(email);
-        return new Email(email);
+        return email;
     }
 }
