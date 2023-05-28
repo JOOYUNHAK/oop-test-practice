@@ -69,15 +69,22 @@ describe('비밀번호 객체(user-password)', () => {
             );
         })
 
-        it('본인이 맞고 이전 비밀번호와 동일하지 않으면 변경 성공', async () => {
+        it('본인이 맞고 이전 비밀번호와 맞아도 유효성 검사가 맞지 않으면 실패', async () => {
             const mockTime = new Date();
             changeResult = passwordMock.changePassword(
                 'Aaabb12345', 'Aaabb1212', mockTime
             );
-            const successSpy = jest.spyOn(passwordMock as any, 'changeSucceeded');
+            await expect(changeResult).rejects
+            .toThrowError(new BadRequestException(ErrorMessage.PASSWORD_VALIDATE));
+        });
 
+        it('본인 확인, 기존 비밀번호 일치 여부, 유효성 검사에 통과하면 정상 변경', async () => {
+            const mockTime = new Date();
+            changeResult = passwordMock.changePassword(
+                'Aaabb12345', 'Test1234567', mockTime
+            );
+            const compareResult = passwordMock.comparePassword('Test1234567');
             await expect(changeResult).resolves.toBe(true);
-            expect(successSpy).toBeCalledWith('Aaabb1212', mockTime)
         })
     })
 })
