@@ -43,7 +43,7 @@ export class Password {
             throw new UnauthorizedException('Something Error Id Or Password')
         if (this.equals(old, toChange))
             throw new ConflictException('Duplicated Password');
-        this.changeSucceeded(toChange, updatedAt);
+        await this.changeSucceeded(toChange, updatedAt);
         return true
     }
 
@@ -65,8 +65,8 @@ export class Password {
     }
 
     /* 비밀번호 변경 완료 */
-    private changeSucceeded(newPassword: string, updatedAt: Date) {
-        this.value = newPassword;
+    private async changeSucceeded(newPassword: string, updatedAt: Date) {
+        this.value = (await Password.create(newPassword)).getValue();
         this.updatedAt = updatedAt;
     }
 
