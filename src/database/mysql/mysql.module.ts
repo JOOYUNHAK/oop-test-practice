@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UserAuthentication } from "src/auth/domain/authentication/authentication";
-import { LoginBlockInfo } from "src/user/domain/login-block-info";
-import { User } from "src/user/domain/user";
-import { Password } from "src/user/domain/user-password";
+import { UserAuthentication } from "src/user-auth-common.module.ts/domain/auth/authentication";
+import { LoginBlockInfo } from "src/user-auth-common.module.ts/domain/user/login-block-info";
+import { User } from "src/user-auth-common.module.ts/domain/user/user";
+import { Password } from "src/user-auth-common.module.ts/domain/user/user-password";
 
 @Module({
     imports: [
