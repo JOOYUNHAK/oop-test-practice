@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user";
 import { ForbiddenException } from "@nestjs/common";
+import { ErrorMessage } from "src/common/exception/enum/error-message.enum";
 
 @Entity('login_block_info')
 export class LoginBlockInfo {
@@ -23,11 +24,13 @@ export class LoginBlockInfo {
         this.blockedAt = blockedAt;
     }
 
+    getTryCount() { return this.loginTry; };
+    getBlockedTime() { return this.blockedAt; };
+
     check(now: Date): void {
         /* 로그인시도 횟수가 5번이면 Block Time 체크 */
-        if (this.loginTry == LOGIN_OPTION.TRY_LIMIT_COUNT)
+        if (this.loginTry == 5)
             this.blockTimeCheck(now);
-            /* 5분이 지났으면 Block 정보 초기화 */
     }
 
     initBlockInfo(): void { this.loginTry = 0; };
@@ -52,12 +55,7 @@ export class LoginBlockInfo {
     private blockTimeCheck(now: Date): void {
         if( !this.blockedAt ) return;
         /* 5분 경과 안했으면 Throw Error */
-        if ( Math.floor( (now.getTime() - this.blockedAt.getTime()) / 1000 ) < LOGIN_OPTION.BLOCK_TIME )  
-            throw new ForbiddenException('Login Try Count Exceed')
+        if ( Math.floor( (now.getTime() - this.blockedAt.getTime()) / 1000 ) < 300 )  
+            throw new ForbiddenException(ErrorMessage.LOGIN_COUNT_EXCEED)
     }    
-}
-
-enum LOGIN_OPTION {
-    TRY_LIMIT_COUNT = 5,
-    BLOCK_TIME = 300
 }

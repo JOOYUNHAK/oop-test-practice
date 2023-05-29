@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "src/user/domain/user";
+import { User } from "src/user-auth-common.module.ts/domain/user/user";
 
 @Entity('authentication')
 export class UserAuthentication {

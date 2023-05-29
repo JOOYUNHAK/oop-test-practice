@@ -1,5 +1,5 @@
-import { UserAuthentication } from "src/auth/domain/authentication/authentication";
-import { USER_STATUS } from "./enum/user-status.enum";
+import { UserAuthentication } from "src/user-auth-common.module.ts/domain/auth/authentication";
+import { USER_STATUS } from "../../../user/domain/enum/user-status.enum";
 import { Password } from "./user-password";
 import { NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";

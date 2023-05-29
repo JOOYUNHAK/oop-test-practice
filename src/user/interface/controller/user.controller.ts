@@ -1,10 +1,9 @@
 import { Body, Controller, Delete, Post, Put, Request, UseGuards } from "@nestjs/common";
 import { RegisterDto } from "../dto/register.dto";
 import { UserService } from "src/user/application/service/user.service";
-import { LoginDto } from "../dto/login.dto";
 import { JwtGuard } from "src/auth/interface/guard/jwt.guard";
 import { ChangePasswordDto } from "../dto/change-password.dto";
-import { UserDto } from "../dto/user.dto";
+import { UserDto } from "../../../user-auth-common.module.ts/interface/dto/user.dto";
 import { LeaveRequestDto } from "../dto/leave-request.dto";
 
 @Controller('user')
@@ -15,16 +14,6 @@ export class UserController {
     @Post('register')
     async register(@Body() registerDto: RegisterDto): Promise<UserDto> {
         return await this.userService.register(registerDto);
-    }
-    @Post('login')
-    async login(@Body() loginDto: LoginDto): Promise<UserDto> {
-        return await this.userService.login(loginDto);
-    }
-
-    @UseGuards(JwtGuard)
-    @Post('logout')
-    async logout(@Request() req: any): Promise<void> {
-        return await this.userService.logout(req.user.id);
     }
 
     @UseGuards(JwtGuard)
