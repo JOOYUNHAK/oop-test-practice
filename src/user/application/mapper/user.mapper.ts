@@ -1,11 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { AuthService } from "src/auth/application/service/auth.service";
-import { LoginBlockInfo } from "src/user/domain/login-block-info";
-import { User } from "src/user/domain/user";
-import { Email } from "src/user/domain/user-email";
-import { Password } from "src/user/domain/user-password";
+import { LoginBlockInfo } from "src/user-auth-common.module.ts/domain/user/login-block-info";
+import { User } from "src/user-auth-common.module.ts/domain/user/user";
+import { Email } from "src/user-auth-common.module.ts/domain/user/user-email";
+import { Password } from "src/user-auth-common.module.ts/domain/user/user-password";
 import { RegisterDto } from "src/user/interface/dto/register.dto";
-import { UserDto } from "src/user/interface/dto/user.dto";
 
 @Injectable()
 export class UserMapper {
@@ -29,13 +28,5 @@ export class UserMapper {
             new LoginBlockInfo(0, null),
             null,
         );
-    }
-
-    /* 도메인 모델을 사용자에게 전달할 Dto로 */
-    toDto(user: User): UserDto {
-        return {
-            id: user.getId(),
-            accessToken: user.getClientAuthentication()
-        }
     }
 }
