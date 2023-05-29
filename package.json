@@ -69,6 +69,7 @@
       "json",
       "ts"
     ],
+    "resetMocks": true,
     "rootDir": "./",
     "modulePaths": ["<rootDir>"],
     "testRegex": ".*\\.spec\\.ts$",
