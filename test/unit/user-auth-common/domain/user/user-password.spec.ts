@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ErrorMessage } from 'src/common/exception/enum/error-message.enum';
-import { Password } from 'src/user/domain/user-password';
+import { Password } from 'src/user-auth-common.module.ts/domain/user/user-password';
 
 /*  
     내부가 비동기 함수 테스트일 경우 jest에게 비동기 함수라고 await으로 알려줘야함

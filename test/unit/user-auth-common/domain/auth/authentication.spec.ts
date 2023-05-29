@@ -1,4 +1,4 @@
-import { UserAuthentication } from "src/auth/domain/authentication/authentication";
+import { UserAuthentication } from "src/user-auth-common.module.ts/domain/auth/authentication";
 
 describe('인증 도메인(authentication)', () => {
     const authenticationMock = new UserAuthentication(
