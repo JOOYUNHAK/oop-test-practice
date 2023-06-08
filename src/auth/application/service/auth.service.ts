@@ -1,11 +1,9 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { JwtToken, } from "../../infra/authentication/token/jwt-token";
 import { UserAuthentication } from "src/user-auth-common.module.ts/domain/auth/authentication";
-import { LoginDto } from "src/auth/interface/dto/login.dto";
 import { UserDto } from "src/user-auth-common.module.ts/interface/dto/user.dto";
 import { UserAuthCommonRepository } from "src/user-auth-common.module.ts/infra/repository/user-auth-common.repository";
-import { ErrorMessage } from "src/common/exception/enum/error-message.enum";
 import { User } from "src/user-auth-common.module.ts/domain/user/user";
 import { UserAuthCommonMapper } from "src/user-auth-common.module.ts/application/mapper/user-auth-common.mapper";
 
@@ -18,11 +16,8 @@ export class AuthService {
     ) { }
 
     /* 로그인 */
-    async login(loginDto: LoginDto): Promise<UserDto> {
-        const user = await this.userAuthCommonRepository.findByEmail(loginDto.email);
-        if( !user ) 
-            throw new NotFoundException(ErrorMessage.LOGIN_FAILED);
-        await user.loginWith(loginDto.password, new Date()); // 로그인 시도
+    async login(user: User, inputPassword: string): Promise<UserDto> {
+        await user.loginWith(inputPassword, new Date()); // 로그인 시도
         /* 만약 패스워드가 일치한다면 해당 사용자의 기존 인증 갱신 */
         if (user.isLoginSucceeded())
             await this.updateUserAuthentication(user);

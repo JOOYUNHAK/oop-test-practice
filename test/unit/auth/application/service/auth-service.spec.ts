@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { JwtModule, JwtService } from "@nestjs/jwt";
+import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { AuthService } from "src/auth/application/service/auth.service";
 import { ErrorMessage } from "src/common/exception/enum/error-message.enum";
@@ -34,11 +34,6 @@ describe('인증 서비스(AuthService)', () => {
     });
 
     describe('login()', () => {
-        it('가입되지 않은 이메일이면 로그인 실패', async () => {
-            jest.spyOn(userAuthCommonRepository, 'findByEmail').mockResolvedValueOnce(null);
-            await expect(authService.login(ValidateSuccessUserStub)).rejects
-                .toThrowError(new NotFoundException(ErrorMessage.LOGIN_FAILED))
-        });
 
         it('비밀번호가 틀리면 로그인 실패', async () => {
             const user = UserStub();
