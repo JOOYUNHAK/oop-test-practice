@@ -29,7 +29,6 @@ export class AuthService {
         /* 로그인에 성공했으므로 마지막 갱신일, 실패했으면 실패 로직에 따른 결과 업데이트 */
         await this.userAuthCommonRepository.save(user);
         console.log('GITHUB')
-        user.statusCheck(); // 비밀번호를 틀렸을 경우 Throw Error
         return this.userAuthCommonMapper.toDto(user);
     }
 
